@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pgy.web.dao.RoleDao">
+    
+    
+    <!-- 角色列 -->
+    <sql id="roleColumn">
+          r.roleId, r.roleName,r.roleCode,r.roleActive
+    </sql>
+    
+    <!-- 菜单列 -->
+    <sql id="menuColumn">
+          l.linkId,
+          l.linkCode,
+		  l.linkName,
+		  l.linkUrl,
+		  l.linkType, 
+		  l.menuName,
+		  l.menuLevel,
+		  l.menuOrder,	 
+		  l.menuActive 
+    </sql>
+    
+    <sql id="parentMenuColumn">
+          pl.linkId as parentLinkId,
+          pl.linkCode as parentLinkCode,
+		  pl.linkName as parentLinkName,
+		  pl.linkUrl as parentLinkUrl,
+		  pl.linkType as parentLinkType, 
+		  pl.menuName as parentMenuName,
+		  pl.menuLevel as parentMenuLevel,
+		  pl.menuOrder as parentMenuOrder,	 
+		  pl.menuActive as parentMenuActive
+    </sql>
+    
+     
+	<resultMap type="Role" id="roleMap">	
+		<id property="roleId" column="roleId"/>
+		<result property="roleName" column="roleName"/>
+		<result property="roleCode" column="roleCode"/>
+		<result property="createTime" column="createTime"/>
+		<result property="updateTime" column="updateTime"/>
+		<result property="createUser" column="createUser"/>
+		<result property="updateUser" column="updateUser"/>	
+		<collection property="menus" ofType="Menu">
+		   <id property="linkId" column="linkId"/>
+		   <result property="linkCode" column="linkCode"/>
+		   <result property="linkName" column="linkName"/>
+		   <result property="linkUrl" column="linkUrl"/>
+		   <result property="linkType" column="linkType"/>
+		   <result property="menuName" column="menuName"/>
+		   <result property="menuLevel" column="menuLevel"/>
+		   <result property="menuOrder" column="menuOrder"/>
+		   <result property="menuActive" column="menuActive"/>
+		   <association property="parentMenu" javaType="Menu">
+		       <id column="parentLinkId" property="linkId"/>
+			   <result column="parentLinkName" property="linkName"/>
+			   <result column="parentLinkCode" property="linkCode"/>
+			   <result column="parentLinkUrl" property="linkUrl"/>
+			   <result column="parentLinkType" property="linkType"/>
+			   <result column="parentMenuName" property="menuName"/>
+			   <result column="parentMenuLevel" property="menuLevel"/>
+			   <result column="parentMenuOrder" property="menuOrder"/>
+			   <result column="parentMenuActive" property="menuActive"/>	
+		   </association>
+		</collection>	
+	</resultMap>
+    
+    
+    <!-- 查询角色信息-->
+	<select id="queryRole" resultMap="roleMap" >
+		SELECT 
+		   <include refid="roleColumn" />,
+		   <include refid="menuColumn" />,
+		   <include refid="parentMenuColumn" />		   			     
+		FROM 
+		   uaw_t_role r
+		LEFT JOIN
+		   uaw_t_role_menu_ref rmr ON rmr.roleCode=r.roleCode
+		LEFT JOIN
+		   uaw_t_link l on l.linkCode=rmr.menuCode 
+		LEFT JOIN
+		   uaw_t_link pl on pl.linkCode = l.parentMenu
+		WHERE
+		   r.roleActive=TRUE
+		<choose>
+		    <when test="roleCode !=null and roleCode!=''" >
+		      AND   r.roleCode=#{roleCode}		         
+		    </when>
+		    <when test="roleId!=null and roleId!=''" >
+		      AND   r.roleId=#{roleId}
+		    </when>
+		    <otherwise>
+		      AND   1=2
+		    </otherwise>
+		</choose>
+		ORDER BY l.menuOrder ASC
+	</select>
+	
+	
+	
+</mapper>

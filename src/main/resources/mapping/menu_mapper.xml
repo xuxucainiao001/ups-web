@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pgy.web.dao.MenuDao">
+    <!-- 菜单列 -->
+    <sql id="menuColumn">
+          l.linkId,
+          l.linkCode,
+		  l.linkName,
+		  l.linkUrl,
+		  l.linkType, 
+		  l.menuName,
+		  l.menuLevel,
+		  l.menuOrder,
+		  l.parentMenu,	 
+		  l.menuActive 
+    </sql>
+     
+	<resultMap type="Menu" id="menuMap">	
+		<id property="linkId" column="linkId"/>
+		<result property="linkCode" column="linkCode"/>
+		<result property="linkName" column="linkName"/>
+		<result property="linkUrl" column="linkUrl"/>
+		<result property="linkType" column="linkType"/>
+		<result property="menuName" column="menuName"/>
+		<result property="menuLevel" column="menuLevel"/>
+		<result property="menuOrder" column="menuOrder"/>
+		<result property="menuActive" column="menuActive"/>
+		<association property="parentMenu"  javaType="Menu">
+		   <id column="parentLinkId" property="linkId"/>
+		   <result column="parentLinkName" property="linkName"/>
+		   <result column="parentLinkCode" property="linkCode"/>
+		   <result column="parentLinkUrl" property="linkUrl"/>
+		   <result column="parentLinkType" property="linkType"/>
+		   <result column="parentMenuName" property="menuName"/>
+		   <result column="parentMenuLevel" property="menuLevel"/>
+		   <result column="parentMenuOrder" property="menuOrder"/>
+		   <result column="parentMenuActive" property="menuActive"/>	
+		</association>	
+		<collection property="subMenus" ofType="Menu" >
+		   <id column="subLinkId" property="linkId"/>
+		   <result column="subLinkName" property="linkName"/>
+		   <result column="subLinkCode" property="linkCode"/>
+		   <result column="subLinkUrl" property="linkUrl"/>
+		   <result column="subLinkType" property="linkType"/>
+		   <result column="subMenuName" property="menuName"/>
+		   <result column="subMenuLevel" property="menuLevel"/>
+		   <result column="subMenuOrder" property="menuOrder"/>
+		   <result column="subMenuActive" property="menuActive"/>		
+		</collection>				
+	</resultMap>	
+	
+    
+    
+  
+	<select id="queryMenu" resultMap="menuMap" >
+		SELECT 
+		   <include refid="menuColumn" />,
+		   parent.linkId as parentLinkId,
+           parent.linkCode as parentLinkCode,
+		   parent.linkName as parentLinkName,
+		   parent.linkUrl as parentLinkUrl,
+		   parent.linkType as parentLinkType, 
+		   parent.menuName as parentMenuName,
+		   parent.menuLevel as parentMenuLevel ,
+		   parent.menuOrder as parentMenuOrder, 
+		   parent.menuActive as parentMenuActive,
+		   sub.linkId as subLinkId,
+           sub.linkCode as subLinkCode,
+		   sub.linkName as subLinkName,
+		   sub.linkUrl as subLinkUrl,
+		   sub.linkType as subLinkType, 
+		   sub.menuName as subMenuName,
+		   sub.menuLevel as subMenuLevel ,
+		   sub.menuOrder as subMenuOrder, 
+		   sub.menuActive as subMenuActive	  
+		FROM 
+		   uaw_t_link l 
+		LEFT JOIN uaw_t_link parent ON l.parentMenu=parent.linkCode
+		LEFT JOIN uaw_t_link sub ON l.linkCode = sub.parentMenu
+		WHERE
+		<choose>
+		    <when test="linkId!=null and linkId!=''">
+		        l.linkId=#{linkId}
+		    </when>
+		    <when test="linkCode!=null and linkCode!=''">
+		        l.linkCode=#{linkCode}
+		    </when>
+		    <otherwise>
+		        1=2
+		    </otherwise>
+		</choose> 
+		ORDER BY l.menuOrder ASC,sub.menuOrder ASC
+	</select>
+	
+	
+	
+</mapper>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pgy.web.dao.UserDao">
+    <!-- 用户列 -->
+    <sql id="userColumn">
+          u.userId,u.userPassword,u.userName,u.userCode,u.description
+    </sql> 
+    
+    <!-- 角色列 -->
+    <sql id="roleColumn">
+          r.roleId, r.roleName,r.roleCode,r.roleActive
+    </sql>
+    
+    <!-- 黑名单单列 -->
+    <sql id="blackNames">
+          l.linkId,
+          l.linkCode,
+		  l.linkName,
+		  l.linkUrl,
+		  l.linkType
+    </sql>
+     
+	<resultMap type="User" id="userMap">	
+		<id property="userId" column="userId"/>
+		<result property="userName" column="userName"/>
+		<result property="userCode" column="userCode"/>
+		<result property="description" column="description"/>
+		<result property="createTime" column="createTime"/>
+		<result property="updateTime" column="updateTime"/>
+		<result property="createUser" column="createUser"/>
+		<result property="updateUser" column="updateUser"/>		
+	</resultMap>
+	
+	<resultMap type="User" id="userDetialMap">	
+		<id property="userId" column="userId"/>
+		<result property="userName" column="userName"/>
+		<result property="userCode" column="userCode"/>
+        <result property="description" column="description"/>
+        <collection property="roles" ofType="Role">
+		    <id property="roleId" column="roleId"/>
+		    <result property="roleName" column="roleName"/>
+		    <result property="roleCode" column="roleCode"/>
+		    <result property="roleActive" column="roleActive"/>
+		</collection>
+		<collection property="blackNames" ofType="Link">
+		     <id property="linkId" column="linkId"/>
+		     <result property="linkCode" column="linkCode"/>
+		     <result property="linkName" column="linkName"/>
+		     <result property="linkUrl" column="linkUrl"/>
+		     <result property="linkType" column="linkType"/>
+		</collection>		
+	</resultMap>
+    
+    
+    <!-- 根据用户名密码查询用户-->
+	<select id="queryUserByUserNameAndPassword" resultMap="userMap" >
+		SELECT 
+		   <include refid="userColumn" />		  
+		FROM 
+		   uaw_t_user u 
+		WHERE
+		<choose>
+		    <when test="userName!=null and userName!='' and userPassword!=null and userPassword!=''">
+		         u.userName=#{userName} AND u.userPassword=#{userPassword}
+		    </when>
+		    <otherwise>
+		         1=2
+		    </otherwise>
+		</choose>
+	</select>
+	
+	
+	<select id="queryUser" resultMap="userDetialMap" >
+		SELECT 
+		   <include refid="userColumn" />,
+		   <include refid="roleColumn" />,
+		   <include refid="blackNames" />	   		    
+		FROM 
+           uaw_t_user u 
+		LEFT JOIN uaw_t_user_role_ref urr ON u.userCode = urr.userCode
+		LEFT JOIN uaw_t_role r ON urr.roleCode = r.roleCode
+		LEFT JOIN uaw_t_user_blackName ub ON ub.userCode = u.userCode
+		LEFT JOIN uaw_t_link l ON l.linkCode = ub.linkCode
+		WHERE 
+		  r.roleActive=TRUE
+		<choose>
+		    <when test="userName!=null and userName!=''" >
+		      AND   u.userName=#{userName}		         
+		    </when>
+		    <when test="userCode!=null and userCode!=''" >
+		      AND   u.userCode=#{userCode}
+		    </when>
+		    <when test="userId!=null and userId!=''" >
+		      AND   u.userId=#{userId}
+		    </when>
+		    <otherwise>
+		      AND   1=2
+		    </otherwise>
+		</choose>
+	</select>
+</mapper>
